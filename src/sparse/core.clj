@@ -34,12 +34,19 @@
   the number of bits and increasing the value so it fits across the whole
   range.
 
-   Throws AssertionError if v is outside the range r, or v < 0"
-  [n v r]
+   Throws AssertionError if v is outside the range r, or v < 0, or r <= 0"
+  [^Integer n ^Number v ^Number r]
   (assert (<= v r))
   (assert (>= v 0))
+  (assert (> r 0))
   (if (>= r n)
-    (Math/floor (+ (* (/ v r) (- n 1)) 1))
+    (let [result (->
+                  (+ (* v (/ n r)) 1)
+                  (Math/floor)
+                  (int))]
+      (if (> result n)
+        n
+        result))
     (bit-to-set n (* v (/ n r)) n)))
 
 (defn zero-seq
@@ -50,7 +57,7 @@
 (defn num->single-bit-in-seq
   "Returns an array of bits of size n with a single bit set that represents
    the position of the value v in the range (zero to) r (inclusive)."
-  [n v r]
+  [^Integer n ^Number v ^Number r]
   (let [bit-to-set (bit-to-set n v r)
         starting-zeros-count (- n bit-to-set)
         ending-zeros-count (- bit-to-set 1)]
