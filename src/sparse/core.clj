@@ -1,10 +1,5 @@
 (ns sparse.core)
 
-(defn foo
-  "I don't do a whole lot."
-  [x]
-  (println x "Hello, World!"))
-
 (defn nth-root
   [n r]
   (Math/pow n (/ 1 r)))
@@ -62,3 +57,40 @@
         starting-zeros-count (- n bit-to-set)
         ending-zeros-count (- bit-to-set 1)]
     (flatten (conj (zero-seq ending-zeros-count) '(1) (zero-seq starting-zeros-count)))))
+
+(defn base-powers
+  "Bit like hundreds, tens and units - the powers of the base b that are required to
+   express the number n as the sum of multiples of the powers."
+  [^Number n ^Number b]
+  (reverse (take-while #(<= % n) (iterate (partial * b) 1))))
+
+(defn num-as-base-power-multiples
+  "Expresses the number n as several multiples of powers of the base b that can be summed
+   to make the number (approximately, as there are no 'decimal' places."
+  [^Integer n ^Number b]
+  (let [bp (base-powers n b)
+        start {:p (inc (count bp)) ;power of the base, like index of HTU in base 10.
+               :r n                ; remainder
+               :c 0}]              ; count
+    (reductions (fn [v p]
+                  (let [n (dec (:p v))
+                        v (:r v)
+                        c (Math/floor (/ v p))
+                        r (- v (* c p))]
+                    {:p n
+                     :c c
+                     :r r}))
+                start
+                bp)))
+
+(defn num->sparse-seq
+  "Returns a sequence of bits of size n with b bits set that represents the value
+   v within the allowable range (zero to) r. Note that if the number of possible
+   bit combinations is lower than the number of integer values in the range, each
+   bit combination will often represent more than one number."
+  [^Integer n ^Integer b ^Number v ^Number r]
+  (let [bit-block-size (->
+                        (/ b n)
+                        (Math/floor)
+                        (int))
+        base (nth-root r b)]))
