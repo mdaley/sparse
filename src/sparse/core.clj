@@ -5,8 +5,8 @@
   (Math/pow n (/ 1 r)))
 
 (defn bit-to-set
-  "Returns the bit to set in an array of bits of size n which represents
-   the value v's position in the range zero to r.
+  "Returns the bit to set in an array of bits of length size which represents
+   a value's position in the range (inclusive of zero).
 
    For example if the number of bits is 10 and the range is 99, the value
    0 has the bit position 0, hence the bit array would be 0000000001.
@@ -25,24 +25,24 @@
    number 13, and bit 1 represents the number zero.
 
   If the number range is less than the number of bits, the value is arrived
-  at by multiplying range and value by n / r, making the range the same as
+  at by multiplying range and value by size / range, making the range the same as
   the number of bits and increasing the value so it fits across the whole
   range.
 
-   Throws AssertionError if v is outside the range r, or v < 0, or r <= 0"
-  [^Integer n ^Number v ^Number r]
-  (assert (<= v r))
-  (assert (>= v 0))
-  (assert (> r 0))
-  (if (>= r n)
+   Throws AssertionError if value is outside the range, or value < 0, or range <= 0"
+  [^Integer size ^Number val ^Number range]
+  (assert (<= val range))
+  (assert (>= val 0))
+  (assert (> range 0))
+  (if (>= range size)
     (let [result (->
-                  (+ (* v (/ n r)) 1)
+                  (+ (* val (/ size range)) 1)
                   (Math/floor)
                   (int))]
-      (if (> result n)
-        n
+      (if (> result size)
+        size
         result))
-    (bit-to-set n (* v (/ n r)) n)))
+    (bit-to-set size (* val (/ size range)) size)))
 
 (defn zero-seq
  "Build a sequence of n zeros"
@@ -50,47 +50,64 @@
  (repeat n 0))
 
 (defn num->single-bit-in-seq
-  "Returns an array of bits of size n with a single bit set that represents
-   the position of the value v in the range (zero to) r (inclusive)."
-  [^Integer n ^Number v ^Number r]
-  (let [bit-to-set (bit-to-set n v r)
-        starting-zeros-count (- n bit-to-set)
+  "Returns an array of bits of size length with a single bit set that represents
+   the position of the value in the range (inclusive of zero)."
+  [^Integer size ^Number val ^Number range]
+  (let [bit-to-set (bit-to-set size val range)
+        starting-zeros-count (- size bit-to-set)
         ending-zeros-count (- bit-to-set 1)]
     (flatten (conj (zero-seq ending-zeros-count) '(1) (zero-seq starting-zeros-count)))))
 
 (defn base-powers
-  "Bit like hundreds, tens and units - the powers of the base b that are required to
-   express the number n as the sum of multiples of the powers."
-  [^Number n ^Number b]
-  (reverse (take-while #(<= % n) (iterate (partial * b) 1))))
+  "Bit like hundreds, tens and units in base 10 - the powers of a base that are
+   required to express the number as the sum of multiples of the powers."
+  [^Number num ^Number base]
+  (assert (> base 1))
+  (reverse (take-while #(<= % num) (iterate (partial * base) 1))))
+
+(defn calc-next-prm
+  "Calculate the next lower power, remainder and multiple"
+  [prm base-power]
+  (let [new-power (dec (:power prm))
+        value (:rmdr prm)
+        mult (int (Math/floor (/ value base-power)))
+        rmdr (- value (* mult base-power))]
+    {:power new-power
+     :mult mult
+     :rmdr rmdr}))
+
+(defn- if-empty-pad-with-zero
+  [s]
+  (if (empty? s) '(0) s))
 
 (defn num-as-base-power-multiples
-  "Expresses the number n as several multiples of powers of the base b that can be summed
-   to make the number (approximately, as there are no 'decimal' places."
-  [^Integer n ^Number b]
-  (let [bp (base-powers n b)
-        start {:p (inc (count bp)) ;power of the base, like index of HTU in base 10.
-               :r n                ; remainder
-               :c 0}]              ; count
-    (reductions (fn [v p]
-                  (let [n (dec (:p v))
-                        v (:r v)
-                        c (Math/floor (/ v p))
-                        r (- v (* c p))]
-                    {:p n
-                     :c c
-                     :r r}))
-                start
-                bp)))
+  "Expresses a number as several multiples of powers of a base that can be summed
+   to make the number (approximately, as there are no 'decimal' places)."
+  [^Number num ^Number base]
+  (assert (> base 1))
+  (assert (>= num 0))
+  (let [base-powers (base-powers num base)
+        start {:power (inc (count base-powers)) ; power of the base, like HTU in base 10.
+               :rmdr num                        ; remainder
+               :mult 0}]                        ; multiples
+    (->>
+     (reductions calc-next-prm start base-powers)
+     (rest)
+     (map :mult)
+     (if-empty-pad-with-zero))))
 
 (defn num->sparse-seq
   "Returns a sequence of bits of size n with b bits set that represents the value
    v within the allowable range (zero to) r. Note that if the number of possible
    bit combinations is lower than the number of integer values in the range, each
    bit combination will often represent more than one number."
-  [^Integer n ^Integer b ^Number v ^Number r]
-  (let [bit-block-size (->
-                        (/ b n)
-                        (Math/floor)
-                        (int))
-        base (nth-root r b)]))
+  [^Integer size ^Integer bits ^Number val ^Number range]
+  (let [bit-block-size (int (Math/floor (/ bits size)))
+        base (nth-root range bits)
+        base-power-multiples (num-as-base-power-multiples val base)
+        q (println "BPMs =  " base-power-multiples)
+        bpm-count (count base-power-multiples)
+        complete-bpms (flatten
+                       (conj base-power-multiples
+                             (take (- bits bpm-count) (repeat 0))))
+        q (println "CBMPS = " complete-bpms)]))
