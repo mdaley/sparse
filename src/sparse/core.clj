@@ -58,12 +58,16 @@
         ending-zeros-count (- bit-to-set 1)]
     (flatten (conj (zero-seq ending-zeros-count) '(1) (zero-seq starting-zeros-count)))))
 
+(defn- if-empty-pad-with-value
+  [v s]
+  (if (empty? s) (cons v '()) s))
+
 (defn base-powers
   "Bit like hundreds, tens and units in base 10 - the powers of a base that are
    required to express the number as the sum of multiples of the powers."
   [^Number num ^Number base]
   (assert (> base 1))
-  (reverse (take-while #(<= % num) (iterate (partial * base) 1))))
+  (if-empty-pad-with-value 1 (reverse (take-while #(<= % num) (iterate (partial * base) 1)))))
 
 (defn calc-next-prm
   "Calculate the next lower power, remainder and multiple"
@@ -76,9 +80,14 @@
      :mult mult
      :rmdr rmdr}))
 
-(defn- if-empty-pad-with-zero
-  [s]
-  (if (empty? s) '(0) s))
+(defn- correct-near-limit
+  [num base-powers]
+  (let [highest-power (first base-powers)]
+    (if (and (> num highest-power)
+             (<= num (Math/ceil highest-power))
+             (> (count base-powers) 1))
+      (rest base-powers)
+      base-powers)))
 
 (defn num-as-base-power-multiples
   "Expresses a number as several multiples of powers of a base that can be summed
@@ -87,6 +96,7 @@
   (assert (> base 1))
   (assert (>= num 0))
   (let [base-powers (base-powers num base)
+        base-powers (correct-near-limit num base-powers)
         start {:power (inc (count base-powers)) ; power of the base, like HTU in base 10.
                :rmdr num                        ; remainder
                :mult 0}]                        ; multiples
@@ -94,16 +104,18 @@
      (reductions calc-next-prm start base-powers)
      (rest)
      (map :mult)
-     (if-empty-pad-with-zero))))
+     (if-empty-pad-with-value 0))))
 
 (defn num->sparse-seq
-  "Returns a sequence of bits of size n with b bits set that represents the value
-   v within the allowable range (zero to) r. Note that if the number of possible
-   bit combinations is lower than the number of integer values in the range, each
-   bit combination will often represent more than one number."
+  "Returns a sequence of bits of length size with a number of bits set representing
+   the value within the allowable range (including zero). Note that if the number of
+   possible bit combinations is lower than the number of integer values in the range,
+   each bit combination will often represent more than one number."
   [^Integer size ^Integer bits ^Number val ^Number range]
-  (let [bit-block-size (int (Math/floor (/ bits size)))
+  (let [bit-block-size (int (Math/floor (/ size bits)))
+        q (println "bit block size =" bit-block-size)
         base (nth-root range bits)
+        q (println "base =" base)
         base-power-multiples (num-as-base-power-multiples val base)
         q (println "BPMs =  " base-power-multiples)
         bpm-count (count base-power-multiples)
