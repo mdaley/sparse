@@ -113,13 +113,14 @@
    each bit combination will often represent more than one number."
   [^Integer size ^Integer bits ^Number val ^Number range]
   (let [bit-block-size (int (Math/floor (/ size bits)))
-        q (println "bit block size =" bit-block-size)
+        spare-bits (- size (* bit-block-size bits))
         base (nth-root range bits)
-        q (println "base =" base)
         base-power-multiples (num-as-base-power-multiples val base)
-        q (println "BPMs =  " base-power-multiples)
         bpm-count (count base-power-multiples)
         complete-bpms (flatten
                        (conj base-power-multiples
-                             (take (- bits bpm-count) (repeat 0))))
-        q (println "CBMPS = " complete-bpms)]))
+                             (take (- bits bpm-count) (repeat 0))))]
+    (flatten
+     (conj
+      (map #(num->single-bit-in-seq bit-block-size % base) complete-bpms)
+      (zero-seq spare-bits)))))
