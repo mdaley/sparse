@@ -112,6 +112,10 @@
    possible bit combinations is lower than the number of integer values in the range,
    each bit combination will often represent more than one number."
   [^Integer size ^Integer bits ^Number val ^Number range]
+  (assert (<= val range))
+  (assert (>= val 0))
+  (assert (>= size 1))
+  (assert (<= bits size))
   (let [bit-block-size (int (Math/floor (/ size bits)))
         spare-bits (- size (* bit-block-size bits))
         base (nth-root range bits)

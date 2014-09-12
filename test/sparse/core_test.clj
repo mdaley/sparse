@@ -2,6 +2,9 @@
   (:require [clojure.test :refer :all]
             [sparse.core :refer :all]))
 
+(def max-uint32 4294967295)
+(def max-uint64 18446744073709551615)
+
 (defn bit-seq-with-one-set-bit
   [len n]
   (assert (<= n len))
@@ -61,7 +64,7 @@
     (is (= (bit-seq-with-one-set-bit 2000 1008) (num->single-bit-in-seq 2000 64 127)))))
 
 (deftest base-power-calculations-validation
-  (testing "Base power calculations fail with bad parameters"
+  (testing "Base power calculation rejects bad parameters"
     (is (thrown? AssertionError (num-as-base-power-multiples 123 1)))
     (is (thrown? AssertionError (num-as-base-power-multiples -000.1 10)))))
 
@@ -78,3 +81,25 @@
     (is (= '(2 5 4 0 11 14 3 15 15) (num-as-base-power-multiples 9999999999 16)))
     (is (= '(1) (num-as-base-power-multiples 1 1.0000001)))
     (is (= '(1 0) (num-as-base-power-multiples 1.0000001 1.0000001)))))
+
+(deftest num->sparse-seq-validations
+  (testing "Num to sparse seq rejects bad parameters"
+    (is (thrown? AssertionError (num->sparse-seq 12 3 0 1)))
+    (is (thrown? AssertionError (num->sparse-seq 12 3 1024.1 1024)))
+    (is (thrown? AssertionError (num->sparse-seq 12 3 -0.0001 1024)))
+    (is (thrown? AssertionError (num->sparse-seq 0 0 1 1)))
+    (is (thrown? AssertionError (num->sparse-seq 12 13 1 1)))))
+
+(deftest num->sparse-seq-calculations-are-correct
+  (testing "Num to sparse seq calculations work correctly"
+    (is  (= '(0 0 0 1 0 0 0 1 0 0 0 1) (num->sparse-seq 12 3 0 1024)))
+    (is  (= '(0 0 0 0 1 0 0 0 1 0 0 0 1) (num->sparse-seq 13 3 0 1024)))
+    (is  (= '(1 1 1) (num->sparse-seq 3 3 0 1024)))
+    (is  (= '(0 0 1 1 1) (num->sparse-seq 5 3 0 1024)))
+    (is  (= '(0 1 1 1) (num->sparse-seq 4 3 1024 1024)))
+    (is  (= '(0 0 0 1 0 0 0 1 0 0 0 1) (num->sparse-seq 12 3 0 1024)))
+    (is  (= '(1 1 1 1 1 1 1 1 1 1 1 1) (num->sparse-seq 12 12 0 1024)))
+    (is  (= '(1 1 1 1 1 1 1 1 1 1 1 1) (num->sparse-seq 12 12 1024 1024)))
+    (is  (= '(0 0 1 1 1 1 1 1 1 1 1 1 1 1) (num->sparse-seq 14 12 0 1024)))
+    (is  (= '(0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1) (num->sparse-seq 25 5 0 1024)))
+    (is  (= '(0 0 0 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 1 0 0 0 0 0 1 0) (num->sparse-seq 41 9 999999 max-uint32)))))
