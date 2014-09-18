@@ -117,10 +117,15 @@
   (assert (>= size 1))
   (assert (<= bits size))
   (let [bit-block-size (int (Math/floor (/ size bits)))
+        q (println "block size =" bit-block-size)
         spare-bits (- size (* bit-block-size bits))
+        q (println "spare bits =" spare-bits)
         base (nth-root range bits)
+        q (println "base =" base)
         base-power-multiples (num-as-base-power-multiples val base)
+        q (println "power multiples =" base-power-multiples)
         bpm-count (count base-power-multiples)
+        q (println "count =" bpm-count)
         complete-bpms (flatten
                        (conj base-power-multiples
                              (take (- bits bpm-count) (repeat 0))))]
@@ -128,3 +133,102 @@
      (conj
       (map #(num->single-bit-in-seq bit-block-size % base) complete-bpms)
       (zero-seq spare-bits)))))
+
+(defn long->bit-seq
+  ([^long l]
+     (map #(- (long %) 48) (Long/toBinaryString l)))
+  ([^long l ^long b]
+     (let [bit-seq (long->bit-seq l)
+           prefix-bit-count (- b (count bit-seq))]
+       (assert (>= prefix-bit-count 0) "Number of bits must be enough to contain the value.")
+       (flatten (conj bit-seq
+                      (take prefix-bit-count (repeat 0)))))))
+
+(defn long->bit-count
+  [^long l]
+  (count (Long/toBinaryString l)))
+
+
+(defn int32?
+  [i]
+  (instance? Integer i))
+
+(def long-max 0x7FFFFFFFFFFFFFFF)
+
+(defn long->bit-ranges
+  "Look at how many bits are required to represent the value 'l' in binary
+   and splits bit count into 'n' blocks with any remainder added to the
+  initial blocks.
+
+  for example, the number 127 can be represented with 7 bits. If there are
+  two blocks then the first with have 4 bits and the second with have 3.
+
+  long->bitranges(127, 2) => (4, 3)
+
+  'n' must be greater than zero. The number of bits required to represent
+  'l' must be greater than or equal to the number of blocks 'n'."
+  [^long l ^long n]
+  {:pre [(> n 0)
+         (>= (long->bit-count l) n)]}
+  (let [range-bit-count (long->bit-count l)
+        range-block-size (long (Math/floor (/ range-bit-count n)))
+        remainder (- range-bit-count (* range-block-size n))]
+    (map
+     +
+     (take n (repeat range-block-size))
+     (concat (take remainder (repeat 1))
+             (take (- n remainder) (repeat 0))))))
+
+(defn split-seq-fn
+  [v n]
+  (let [starters (take (- (count v) 1) v)
+        last-split (remove empty? (split-at n (last v)))]
+    (concat starters last-split)))
+
+(defn split-seq
+  "split the sequence 's' into several smaller sequences of the sizes specified in the sequence 'r'."
+  [s r]
+  (assert (== (count s) (reduce + r)) "The total size of the subsequences must be the same as the size of the initial sequence.")
+  (assert (reduce #(and %1 (>= %2 1)) true r) "Subelements must be of size 1 or above.")
+  (assert (not= 0 (count s)) "There must be a non-empty sequence to split.")
+  (reduce split-seq-fn [s] r))
+
+(defn seq->long
+  [s]
+  (Long/valueOf (reduce str s) 2))
+
+(defn seq->max
+  [s]
+  (long (- (Math/pow 2 (count s)) 1)))
+
+(defn seq->single-bit-sparse-array
+  [size s]
+  (let [val (seq->long s)
+        max (seq->max s)]
+    (num->single-bit-in-seq size val max)))
+
+(defn long->sparse
+  [size bits value range]
+  {:pre [(instance? Long size) (instance? Long bits)
+         (instance? Long value) (instance? Long range)
+         (> size 0) (> bits 0)
+         (<= bits size)
+         (>= value 0) (<= value range)
+         (>= range 1) (<= range (Long/MAX_VALUE))]}
+  (let [sparse-block-size (Math/floor (/ size bits))
+        sparse-starting-block-size (- size (* sparse-block-size bits))
+        ranges (long->bit-ranges range bits)
+        ranges-bit-count (reduce + ranges)
+        value-as-bits (long->bit-seq value ranges-bit-count)
+        value-split (split-seq value-as-bits ranges)
+        sparses (map #(seq->single-bit-sparse-array sparse-block-size %) value-split)
+        q (println "block size" sparse-block-size)
+        q (println "spare bits" sparse-starting-block-size)
+        q (println "ranges" ranges)
+        q (println "count" ranges-bit-count)
+        q (println "value" value-as-bits)
+        q (println "val-r" value-split)
+        q (println "sparses" sparses)]
+    (flatten (concat
+              (zero-seq sparse-starting-block-size)
+              sparses))))
