@@ -195,7 +195,7 @@
 
 (defn seq->long
   [s]
-  (Long/valueOf (reduce str s) 2))
+  (reduce #(+ (* %1 2) %2) 0 s))
 
 (defn seq->max
   [s]
@@ -203,6 +203,7 @@
 
 (defn seq->single-bit-sparse-array
   [size s]
+  (println "SIZE s" size s)
   (let [val (seq->long s)
         max (seq->max s)]
     (num->single-bit-in-seq size val max)))
