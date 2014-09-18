@@ -79,20 +79,23 @@
   For example, the number 127 can be represented with 7 bits. If there are
   two blocks, the first with have 4 bits and the second with have 3.
 
-  (long->bitranges 127, 2) => (4, 3)"
+  (long->bitranges 127, 2) => (4, 3)
+
+  If the number of bits required to represent the number is lower than 'n' the
+  number of blocks requested, the ranges returned will be all of one bit size
+  and there will be 'n' of them."
   [^long l ^long n]
-  {:pre [(> n 0)
-         (>= (long->bit-count l) n)]}
+  (println "LONG->BIT-RANGES" l n)
   (assert (> n 0) "The number of blocks must be greater than zero.")
-  (assert (>= (long->bit-count l) n) "The number of bits required to represent the number must be greater than or equal to the number of blocks.")
   (let [range-bit-count (long->bit-count l)
         range-block-size (long (Math/floor (/ range-bit-count n)))
         remainder (- range-bit-count (* range-block-size n))]
-    (map
-     +
-     (take n (repeat range-block-size))
-     (concat (take remainder (repeat 1))
-             (take (- n remainder) (repeat 0))))))
+    (if (< range-bit-count n)
+      (take n (repeat 1))
+      (map +
+           (take n (repeat range-block-size))
+           (concat (take remainder (repeat 1))
+                   (take (- n remainder) (repeat 0)))))))
 
 (defn split-seq-fn
   "Function supporting the spliting of a sequence into smaller sequences. Expects 'v'
