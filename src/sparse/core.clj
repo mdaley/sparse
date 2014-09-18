@@ -85,7 +85,6 @@
   number of blocks requested, the ranges returned will be all of one bit size
   and there will be 'n' of them."
   [^long l ^long n]
-  (println "LONG->BIT-RANGES" l n)
   (assert (> n 0) "The number of blocks must be greater than zero.")
   (let [range-bit-count (long->bit-count l)
         range-block-size (long (Math/floor (/ range-bit-count n)))
