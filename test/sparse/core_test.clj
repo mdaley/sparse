@@ -12,10 +12,8 @@
   (flatten (conj (repeat (- n 1) 0) '(1) (repeat (- len n) 0))))
 
 (deftest num-to-bit-seq-parameter-validations
-  (testing "number must be greater than zero"
-    (is (thrown? AssertionError (num->single-bit-in-seq 10 -0.1 9))))
   (testing "number can't be above allowed range"
-    (is (thrown? AssertionError (num->single-bit-in-seq 10 9.01 9))))
+    (is (thrown? AssertionError (num->single-bit-in-seq 10 10 9))))
   (testing "range must be greater than zero"
     (is (thrown? AssertionError (num->single-bit-in-seq 10 0 0)))))
 

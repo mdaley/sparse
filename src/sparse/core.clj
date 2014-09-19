@@ -1,6 +1,6 @@
 (ns sparse.core)
 
-(defn bit-to-set
+(defn- bit-to-set
   "Returns the bit to set in an array of bits of length size which represents
    a value's position in the range (inclusive of zero).
 
@@ -20,16 +20,16 @@
    is (zero to) 99, then one bit represents each number - bit 14 represents the
    number 13, and bit 1 represents the number zero.
 
-  If the number range is less than the number of bits, the value is arrived
-  at by multiplying range and value by size / range, making the range the same as
-  the number of bits and increasing the value so it fits across the whole
-  range.
+   If the number range is less than the number of bits, the value is arrived
+   at by multiplying range and value by size / range, making the range the same as
+   the number of bits and increasing the value so it fits across the whole
+   range.
 
    Throws AssertionError if value is outside the range, or value < 0, or range <= 0"
-  [^Integer size ^Number val ^Number range]
-  (assert (<= val range))
-  (assert (>= val 0))
-  (assert (pos? range))
+  [^long size ^long val ^long range]
+  (assert (<= val range) "Value must be <= the range.")
+  (assert (>= val 0) "Value must be >= zero.")
+  (assert (pos? range) "Range must be > zero.")
   (if (>= range size)
     (let [result (->
                   (/ size range)
@@ -42,7 +42,7 @@
         result))
     (bit-to-set size (* val (/ size range)) size)))
 
-(defn zero-seq
+(defn- zero-seq
  "Build a sequence of n zeros"
  [n]
  (repeat n 0))
