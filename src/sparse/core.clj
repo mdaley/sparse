@@ -29,10 +29,12 @@
   [^Integer size ^Number val ^Number range]
   (assert (<= val range))
   (assert (>= val 0))
-  (assert (> range 0))
+  (assert (pos? range))
   (if (>= range size)
     (let [result (->
-                  (+ (* val (/ size range)) 1)
+                  (/ size range)
+                  (* val)
+                  (inc)
                   (Math/floor)
                   (int))]
       (if (> result size)
@@ -51,7 +53,7 @@
   [^Integer size ^Number val ^Number range]
   (let [bit-to-set (bit-to-set size val range)
         starting-zeros-count (- size bit-to-set)
-        ending-zeros-count (- bit-to-set 1)]
+        ending-zeros-count (dec bit-to-set)]
     (flatten (conj (zero-seq ending-zeros-count) '(1) (zero-seq starting-zeros-count)))))
 
 (defn long->bit-seq
@@ -85,7 +87,7 @@
   number of blocks requested, the ranges returned will be all of one bit size
   and there will be 'n' of them."
   [^long l ^long n]
-  (assert (> n 0) "The number of blocks must be greater than zero.")
+  (assert (pos? n) "The number of blocks must be greater than zero.")
   (let [range-bit-count (long->bit-count l)
         range-block-size (long (Math/floor (/ range-bit-count n)))
         remainder (- range-bit-count (* range-block-size n))]
@@ -103,7 +105,7 @@
   sequence of nested sequences is returned. When called using reduce, a sequence can
   be split into parts of the sizes specified in the sequence containing the values of 'n'."
   [v n]
-  (let [starters (take (- (count v) 1) v)
+  (let [starters (take (dec (count v)) v)
         last-split (remove empty? (split-at n (last v)))]
     (concat starters last-split)))
 
@@ -121,7 +123,7 @@
 
 (defn seq->max
   [s]
-  (long (- (Math/pow 2 (count s)) 1)))
+  (long (dec (Math/pow 2 (count s)))))
 
 (defn seq->single-bit-sparse-array
   "Turn a sequence of 1s and 0s into a sparse array with only one bit set."
@@ -132,7 +134,7 @@
 
 (defn long->sparse
   [^long size ^long bits ^long value ^long range]
-  (assert (> size 0) "Size of sparse array must be greater than zero.")
+  (assert (pos? size) "Size of sparse array must be greater than zero.")
   (assert (<= bits size) "Number of bits to set in sparse array must be less than or equal to the size of the sparse array.")
   (assert (>= range 1) (str "Range must be greater than zero"))
   (assert (and (>= value 0) (<= value range)) "Value must be between zero and range inclusive.")
