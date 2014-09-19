@@ -3,11 +3,11 @@
 A library to allow the creation of sparse bit arrays from primitive types.
 
 The theory of Heirarchical Temporal Memory espoused by Jeff Hawkins of
-![Numenta](http://numenta.com) and implemented in
-![NuPIC](http://github.com/numenta/nupic) calls for the use of sparse arrays of
+[Numenta](http://numenta.com) and implemented in
+[NuPIC](http://github.com/numenta/nupic) calls for the use of sparse arrays of
 bits representing all manner of data that can be passed into and out of an
 artifical representation of the neocortex. A nascent reimplementation of
-this theory in clojure is ![clortex](http://github.com/fergalbyrne/clortex).
+this theory in clojure is [clortex](http://github.com/fergalbyrne/clortex).
 
 The intent of this library is to provide a mechanism for creating suitable 
 sparse bit arrays, for input into a neo-cortical model, from primitive data types.
