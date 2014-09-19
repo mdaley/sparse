@@ -22,7 +22,7 @@ For example, suppose a sparse sequence represents a long value, has 21 bits with
 are some example transformations of integers into the sparse sequence:
 
 <table>
-  <tr><hd>Value</th><th>Sparse array</th></tr>
+  <tr><th>Value</th><th>Sparse array</th></tr>
   <tr><td>0</td><td>(0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</td></tr>
   <tr><td>100</td><td>(0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 1)</td></tr>
   <tr><td>567</td><td>(0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 1 0 1 0 0 0)</td></tr>
