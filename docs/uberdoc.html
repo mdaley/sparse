@@ -2866,7 +2866,7 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>sparse -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="http://github.com/mdaley/sparse">sparse</a></h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>Generate sparse bit array representations of fundamental data types.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.6.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#sparse.core">sparse.core</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.core" name="sparse.core"><h1 class="project-name">sparse.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Creation of sparse bit sequences from primitive types</h2>
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.6.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#sparse.core">sparse.core</a></li><li><a href="#sparse.utils">sparse.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.core" name="sparse.core"><h1 class="project-name">sparse.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Creation of sparse bit sequences from primitive types</h2>
 
 <p>The theory of Heirarchical Temporal Memory espoused by Jeff Hawkins of
 Numenta and implemented in NuPic calls for the use of sparse arrays of
@@ -2894,7 +2894,25 @@ are some example transformations:</p>
 
 <p>1024 => (0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</p>
 </td><td class="codes"></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns sparse.core)</pre></td></tr><tr><td class="docs"><p>Returns the bit to set in an array of bits of length size which represents
+</td><td class="codes"><pre class="brush: clojure">(ns sparse.core
+  (require [sparse.utils :refer :all]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn long-&gt;sparse
+  [^long size ^long bits ^long value ^long range]
+  (assert (pos? size) &quot;Size of sparse array must be greater than zero.&quot;)
+  (assert (&lt;= bits size) &quot;Number of bits to set in sparse array must be less than or equal to the size of the sparse array.&quot;)
+  (assert (&gt;= range 1) (str &quot;Range must be greater than zero&quot;))
+  (assert (and (&gt;= value 0) (&lt;= value range)) &quot;Value must be between zero and range inclusive.&quot;)
+  (let [sparse-block-size (Math/floor (/ size bits))
+        sparse-starting-block-size (- size (* sparse-block-size bits))
+        ranges (long-&gt;bit-ranges range bits)
+        ranges-bit-count (reduce + ranges)
+        value-as-bits (long-&gt;bit-seq value ranges-bit-count)
+        value-in-blocks (split-seq value-as-bits ranges)
+        sparse-blocks (map #(seq-&gt;single-bit-sparse-array sparse-block-size %) value-in-blocks)]
+    (flatten (concat
+              (zero-seq sparse-starting-block-size)
+              sparse-blocks))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.utils" name="sparse.utils"><h1 class="project-name">sparse.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns sparse.utils)</pre></td></tr><tr><td class="docs"><p>Returns the bit to set in an array of bits of length size which represents
    a value's position in the range (inclusive of zero).</p>
 
 <p>   For example if the number of bits is 10 and the range is 99, the value
@@ -2919,7 +2937,7 @@ are some example transformations:</p>
    range.</p>
 
 <p>   Throws AssertionError if value is outside the range, or value &lt; 0, or range &lt;= 0</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- bit-to-set
+</td><td class="codes"><pre class="brush: clojure">(defn bit-to-set
   [^long size ^long val ^long range]
   (assert (&lt;= val range) &quot;Value must be &lt;= the range.&quot;)
   (assert (&gt;= val 0) &quot;Value must be &gt;= zero.&quot;)
@@ -2935,7 +2953,7 @@ are some example transformations:</p>
         size
         result))
     (bit-to-set size (* val (/ size range)) size)))</pre></td></tr><tr><td class="docs"><p>Build a sequence of n zeros</p>
-</td><td class="codes"><pre class="brush: clojure">(defn- zero-seq
+</td><td class="codes"><pre class="brush: clojure">(defn zero-seq
  [n]
  (repeat n 0))</pre></td></tr><tr><td class="docs"><p>Returns an array of bits of size length with a single bit set that represents
    the position of the value in the range (inclusive of zero).</p>
@@ -3007,23 +3025,7 @@ are some example transformations:</p>
   [size s]
   (let [val (seq-&gt;long s)
         max (seq-&gt;max s)]
-    (num-&gt;single-bit-in-seq size val max)))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn long-&gt;sparse
-  [^long size ^long bits ^long value ^long range]
-  (assert (pos? size) &quot;Size of sparse array must be greater than zero.&quot;)
-  (assert (&lt;= bits size) &quot;Number of bits to set in sparse array must be less than or equal to the size of the sparse array.&quot;)
-  (assert (&gt;= range 1) (str &quot;Range must be greater than zero&quot;))
-  (assert (and (&gt;= value 0) (&lt;= value range)) &quot;Value must be between zero and range inclusive.&quot;)
-  (let [sparse-block-size (Math/floor (/ size bits))
-        sparse-starting-block-size (- size (* sparse-block-size bits))
-        ranges (long-&gt;bit-ranges range bits)
-        ranges-bit-count (reduce + ranges)
-        value-as-bits (long-&gt;bit-seq value ranges-bit-count)
-        value-in-blocks (split-seq value-as-bits ranges)
-        sparse-blocks (map #(seq-&gt;single-bit-sparse-array sparse-block-size %) value-in-blocks)]
-    (flatten (concat
-              (zero-seq sparse-starting-block-size)
-              sparse-blocks))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_sparse.core">sparse.core</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+    (num-&gt;single-bit-in-seq size val max)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_sparse.core">sparse.core</li><li class="floating-toc-li" id="floating-toc_sparse.utils">sparse.utils</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
