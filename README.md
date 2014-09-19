@@ -21,13 +21,13 @@ For example, suppose a sparse array represents a long value, has 21 bits and
 5 bits must be set and can deal with a value from zero to 1024. Here
 are some example transformations:
 
-   0 => (0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)
- 
- 100 => (0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 1)
-
- 567 => (0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 1 0 1 0 0 0)
-
-1024 => (0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)
+<table>
+  <tr><td>Value</td><td>Sparse array</td></tr>
+  <tr><td>0</td><td>(0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</td></tr>
+  <tr><td>100</td><td>(0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 1)</td></tr>
+  <tr><td>567</td><td>(0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 1 0 1 0 0 0)</td></tr>
+  <tr><td>1024</td><td>(0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</td></tr>
+</table>
 
 ## Usage
 
