@@ -2866,34 +2866,7 @@ net.brehaut.ClojureTools = (function (SH) {
   };
 })(SyntaxHighlighter);
 </script><title>sparse -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="http://github.com/mdaley/sparse">sparse</a></h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>Generate sparse bit array representations of fundamental data types.</p>
-</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.6.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#sparse.core">sparse.core</a></li><li><a href="#sparse.utils">sparse.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.core" name="sparse.core"><h1 class="project-name">sparse.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs"><h2>Creation of sparse bit sequences from primitive types</h2>
-
-<p>The theory of Heirarchical Temporal Memory espoused by Jeff Hawkins of
-Numenta and implemented in NuPic calls for the use of sparse arrays of
-bits representing all manner of data being passed into and out of an
-artifical representation of the neocortex. A nascent reimplementation of
-this theory in clojure is clortex.</p>
-
-<p>The intent of this library is to provide a mechanism for creating
-suitable sparse bit arrays from primitive data types.</p>
-
-<p>The rules used here are that a sparse array used as an input has a particular
-size in bits, there are always a certain number of bits turned on and the
-array can represent values within two bounds. For a positive whole number this
-is simple: the range can be from zero to the range maximum.</p>
-
-<p>Here is an example: a sparse array represents a long value, has 21 bits and
-5 bits must be set. The array can deal with a value from zero to 1024. Here
-are some example transformations:</p>
-
-<p>0    => (0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</p>
-
-<p>100  => (0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 1)</p>
-
-<p>567  => (0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 1 0 1 0 0 0)</p>
-
-<p>1024 => (0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</p>
-</td><td class="codes"></td></tr><tr><td class="docs">
+</div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.6.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#sparse.core">sparse.core</a></li><li><a href="#sparse.utils">sparse.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.core" name="sparse.core"><h1 class="project-name">sparse.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns sparse.core
   (require [sparse.utils :refer :all]))</pre></td></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(defn long-&gt;sparse
