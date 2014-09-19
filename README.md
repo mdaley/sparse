@@ -43,7 +43,7 @@ reversed back to the original input value.
 
 ## Usage
 
-See the [documentation](http://github.com/mdaley/sparse/docs/uberdoc.html).
+See the [documentation](http://mdaley.github.io/sparse/docs/uberdoc.html).
 
 ## License
 
