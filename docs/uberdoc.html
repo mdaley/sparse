@@ -2865,10 +2865,20 @@ net.brehaut.ClojureTools = (function (SH) {
     build_tree: build_tree
   };
 })(SyntaxHighlighter);
-</script><title>sparse -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="http://github.com/mdaley/sparse">sparse</a></h1><h2 class="project-version">0.1.0-SNAPSHOT</h2><br /><p>Generate sparse bit array representations of fundamental data types.</p>
+</script><title>sparse -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="http://github.com/mdaley/sparse">sparse</a></h1><h2 class="project-version">0.1.2-SNAPSHOT</h2><br /><p>Generate sparse bit array representations of fundamental data types.</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.6.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#sparse.core">sparse.core</a></li><li><a href="#sparse.utils">sparse.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.core" name="sparse.core"><h1 class="project-name">sparse.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns sparse.core
-  (require [sparse.utils :refer :all]))</pre></td></tr><tr><td class="docs">
+  (require [sparse.utils :refer :all]))</pre></td></tr><tr><td class="docs"><p>Turns a <code>value</code> within the range zero to <code>range</code> (inclusive) into a sparse sequence
+  of 1s and 0s that has length <code>size</code> and <code>bits</code> number of bits set.</p>
+
+<p>  Throws assertion errors for various situations:</p>
+
+<ol>
+<li>Asking for a zero size sparse array.</li>
+<li>Trying to set more bits than there are in the sparse array.</li>
+<li>Asking for a range that is less than or equal to zero.</li>
+<li>Asking for a value that is not from zero to the allowed range.</li>
+</ol>
 </td><td class="codes"><pre class="brush: clojure">(defn long-&gt;sparse
   [^long size ^long bits ^long value ^long range]
   (assert (pos? size) &quot;Size of sparse array must be greater than zero.&quot;)
