@@ -5,7 +5,7 @@
   "Turns a `value` within the range zero to `range` (inclusive) into a sparse sequence
   of 1s and 0s that has length `size` and `bits` number of bits set.
 
-  Throws assertion errors for various situations:
+  Throws assertion error for various situations:
 
   1. Asking for a zero size sparse array.
   2. Trying to set more bits than there are in the sparse array.
