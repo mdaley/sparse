@@ -2,6 +2,15 @@
   (require [sparse.utils :refer :all]))
 
 (defn long->sparse
+  "Turns a `value` within the range zero to `range` (inclusive) into a sparse sequence
+  of 1s and 0s that has length `size` and `bits` number of bits set.
+
+  Throws assertion errors for various situations:
+
+  1. Asking for a zero size sparse array.
+  2. Trying to set more bits than there are in the sparse array.
+  3. Asking for a range that is less than or equal to zero.
+  4. Asking for a value that is not from zero to the allowed range."
   [^long size ^long bits ^long value ^long range]
   (assert (pos? size) "Size of sparse array must be greater than zero.")
   (assert (<= bits size) "Number of bits to set in sparse array must be less than or equal to the size of the sparse array.")
