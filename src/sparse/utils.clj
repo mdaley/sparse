@@ -131,3 +131,9 @@
   (let [val (seq->long s)
         max (seq->max s)]
     (num->single-bit-in-seq size val max)))
+
+
+(defn valid-sparse?
+  "Check that a sparse sequence is valid, i.e. only contains 1s and 0s or is empty."
+  [sparse]
+  (not (some #(not (or (= 1 %) (= 0 %))) sparse)))

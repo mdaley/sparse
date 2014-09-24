@@ -26,3 +26,13 @@
     (flatten (concat
               (zero-seq sparse-starting-block-size)
               sparse-blocks))))
+
+(defn sparse->long
+  [sparse ^long range]
+  (assert (>= range 1) "Range must be greater than zero")
+  (assert (valid-sparse? sparse) "That's not a sparse sequence")
+  (let [size (count sparse)
+        bits (reduce + sparse)
+        sparse-block-size (Math/floor (/ size bits))
+        sparse-starting-block-size (- size (* sparse-block-size bits))
+        ranges (long->bit-ranges range bits)]))
