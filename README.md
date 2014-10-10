@@ -43,6 +43,25 @@ reversed back to the original input value.
 
 ## Usage
 
+Import from [clojars](https://clojars.org/sparse) using:
+
+```clj
+[sparse 0.1.2]
+```
+
+then:
+
+```clj
+(:require [sparse.core :refer [long->sparse]])
+
+...
+
+(long->sparse 1000 17 455 1024)
+```
+
+This generates 1000 bit sparse representation with 17 bits set of the number 455 within the
+range 0 to 1024.
+
 See the [documentation](http://mdaley.github.io/sparse/docs/uberdoc.html).
 
 ## License
