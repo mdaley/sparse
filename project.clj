@@ -1,4 +1,4 @@
-(defproject sparse "0.1.3"
+(defproject sparse "0.1.4-SNAPSHOT"
   :description "Generate sparse bit array representations of fundamental data types."
   :url "http://github.com/mdaley/sparse"
   :license {:name "Eclipse Public License"
