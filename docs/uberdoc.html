@@ -2868,7 +2868,7 @@ net.brehaut.ClojureTools = (function (SH) {
 </script><title>sparse -- Marginalia</title></head><body><table><tr><td class="docs"><div class="header"><h1 class="project-name"><a href="http://github.com/mdaley/sparse">sparse</a></h1><h2 class="project-version">0.1.2-SNAPSHOT</h2><br /><p>Generate sparse bit array representations of fundamental data types.</p>
 </div><div class="dependencies"><h3>dependencies</h3><table><tr><td class="dep-name">org.clojure/clojure</td><td class="dotted"><hr /></td><td class="dep-version">1.6.0</td></tr></table></div></td><td class="codes" style="text-align: center; vertical-align: middle;color: #666;padding-right:20px"><br /><br /><br />(this space intentionally left almost blank)</td></tr><tr><td class="docs"><div class="toc"><a name="toc"><h3>namespaces</h3></a><ul><li><a href="#sparse.core">sparse.core</a></li><li><a href="#sparse.utils">sparse.utils</a></li></ul></div></td><td class="codes">&nbsp;</td></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.core" name="sparse.core"><h1 class="project-name">sparse.core</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
 </td><td class="codes"><pre class="brush: clojure">(ns sparse.core
-  (require [sparse.utils :refer :all]))</pre></td></tr><tr><td class="docs"><p>Turns a <code>value</code> within the range zero to <code>range</code> (inclusive) into a sparse sequence
+  (require [sparse.utils :refer :all]))</pre></td></tr><tr><td class="docs"><p>Turns a <code>value</code> within the range zero to <code>range</code> (inclusive) into a sparse string
   of 1s and 0s that has length <code>size</code> and <code>bits</code> number of bits set.</p>
 
 <p>  Throws assertion error for various situations:</p>
@@ -2889,30 +2889,34 @@ net.brehaut.ClojureTools = (function (SH) {
         sparse-starting-block-size (- size (* sparse-block-size bits))
         ranges (long-&gt;bit-ranges range bits)
         ranges-bit-count (reduce + ranges)
-        value-as-bits (long-&gt;bit-seq value ranges-bit-count)
-        value-in-blocks (split-seq value-as-bits ranges)
-        sparse-blocks (map #(seq-&gt;single-bit-sparse-array sparse-block-size %) value-in-blocks)]
-    (flatten (concat
-              (zero-seq sparse-starting-block-size)
-              sparse-blocks))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.utils" name="sparse.utils"><h1 class="project-name">sparse.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(ns sparse.utils)</pre></td></tr><tr><td class="docs"><p>Returns the bit to set in an array of bits of length size which represents
-   a value's position in the range (inclusive of zero).</p>
+        value-bits (long-&gt;bitstring value ranges-bit-count)
+        value-blocks (split-bitstring value-bits ranges)
+        sparse-blocks (map #(bitstring-&gt;single-bit-bitstring sparse-block-size %) value-blocks)]
+    (str (zeros sparse-starting-block-size) (reduce str &quot;&quot; sparse-blocks))))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn sparse-&gt;long
+  [sparse ^long range]
+  (assert (&gt;= range 1) &quot;Range must be greater than zero&quot;)
+  (assert (valid-sparse? sparse) &quot;That's not a sparse sequence&quot;)
+  (let [size (count sparse)
+        bits (reduce + sparse)
+        sparse-block-size (Math/floor (/ size bits))
+        sparse-starting-block-size (- size (* sparse-block-size bits))
+        ranges (long-&gt;bit-ranges range bits)]))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr><tr><td class="docs"><div class="docs-header"><a class="anchor" href="#sparse.utils" name="sparse.utils"><h1 class="project-name">sparse.utils</h1><a class="toc-link" href="#toc">toc</a></a></div></td><td class="codes" /></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(ns sparse.utils)</pre></td></tr><tr><td class="docs"><p>Returns the bit to set in an array of bits of length <code>size</code> which represents
+   the value <code>val</code>'s position in the range zero to <code>range</code>.</p>
 
 <p>   For example if the number of bits is 10 and the range is 99, the value
-   0 has the bit position 0, hence the bit array would be 0000000001.</p>
+   0 has the bit position 0, representing the bit array 0000000001.</p>
 
-<p>   If the value is 99 the bit position is 10, hence the bit array is 1000000000.</p>
+<p>   If the value is 99 the bit position is 9, representing 1000000000.</p>
 
-<p>   If the value is 33, the bit position is 4, hence the bit array is 0000001000.</p>
+<p>   If the value is 33, the bit position is 3, representing 0000001000..</p>
 
-<p>   Don't forget that several numbers, along with zero, can be represented by
-   bit position 0.</p>
-
-<p>   Of course if the number range is large and the bit array is small, then many
+<p>   Of course if the number range is large and the bit array is small, many
    numbers will be represented by each bit position. If the number range is the
    same as the number of bits, e.g. the number of bits is 100 and the number range
-   is (zero to) 99, then one bit represents each number - bit 14 represents the
-   number 13, and bit 1 represents the number zero.</p>
+   is (zero to) 99, then one bit represents each number - bit 13 represents the
+   number 13, and bit 0 represents the number zero.</p>
 
 <p>   If the number range is less than the number of bits, the value is arrived
    at by multiplying range and value by size / range, making the range the same as
@@ -2921,41 +2925,51 @@ net.brehaut.ClojureTools = (function (SH) {
 
 <p>   Throws AssertionError if value is outside the range, or value &lt; 0, or range &lt;= 0</p>
 </td><td class="codes"><pre class="brush: clojure">(defn bit-to-set
-  [^long size ^long val ^long range]
+  [^long size val range]
   (assert (&lt;= val range) &quot;Value must be &lt;= the range.&quot;)
   (assert (&gt;= val 0) &quot;Value must be &gt;= zero.&quot;)
   (assert (pos? range) &quot;Range must be &gt; zero.&quot;)
   (if (&gt;= range size)
-    (let [result (-&gt;
-                  (/ size range)
-                  (* val)
-                  (inc)
+    (let [max-bit (dec size)
+          result (-&gt;
+                  (/ val range)
+                  (* size)
                   (Math/floor)
                   (int))]
-      (if (&gt; result size)
-        size
+      (if (&gt; result max-bit) ; at limit result will be too high.
+        max-bit
         result))
-    (bit-to-set size (* val (/ size range)) size)))</pre></td></tr><tr><td class="docs"><p>Build a sequence of n zeros</p>
-</td><td class="codes"><pre class="brush: clojure">(defn zero-seq
- [n]
- (repeat n 0))</pre></td></tr><tr><td class="docs"><p>Returns an array of bits of size length with a single bit set that represents
-   the position of the value in the range (inclusive of zero).</p>
-</td><td class="codes"><pre class="brush: clojure">(defn num-&gt;single-bit-in-seq
-  [^Integer size ^Number val ^Number range]
-  (let [bit-to-set (bit-to-set size val range)
-        starting-zeros-count (- size bit-to-set)
-        ending-zeros-count (dec bit-to-set)]
-    (flatten (conj (zero-seq ending-zeros-count) '(1) (zero-seq starting-zeros-count)))))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn long-&gt;bit-seq
+    (bit-to-set size (* val (/ size range)) size)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn zeros
+  [n]
+  (reduce str  (repeat n &quot;0&quot;)))</pre></td></tr><tr><td class="docs"><p>Returns a length <code>size</code> bitstring with a single bit set that represents the position of the number
+  <code>value</code> in the <code>range</code> (zreo to <code>range</code> inclusive).</p>
+</td><td class="codes"><pre class="brush: clojure">(defn num-&gt;single-bit-bitstring
+  [size val range]
+  (let [bit-to-set (bit-to-set size val range)]
+    (reduce (fn [s x] (str s (if (= x bit-to-set) &quot;1&quot; &quot;0&quot;))) &quot;&quot; (reverse (clojure.core/range 0 size)))))</pre></td></tr><tr><td class="docs"><p>Take <code>bitstring</code>, transform it to a number, work out the maximum long value of a bit
+  string of its size and then calculate the single-bit bitstring of length <code>size</code> that
+  represents the number.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn bitstring-&gt;single-bit-bitstring
+  [size bitstring]
+  (let [val (Long/parseLong bitstring 2)
+        range (Long/parseLong (reduce str (repeat (count bitstring) &quot;1&quot;)) 2)]
+    (num-&gt;single-bit-bitstring size val range)))</pre></td></tr><tr><td class="docs"><p>(defn bits->binarystring
+  [size bits]
+  (reduce (fn [s x] (str s (if (contains? bits x) "1" "0"))) "" (reverse (range size))))</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Turn a long value 'l' into a string of bits. In the second form, the number of bits 'b'
+  can be specified with zero padding occurring where necessary. The number of bits 'b' must
+  be sufficient to fit the number.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn long-&gt;bitstring
   ([^long l]
-     (map #(- (long %) 48) (Long/toBinaryString l)))
+     (Long/toBinaryString l))
   ([^long l ^long b]
-     (let [bit-seq (long-&gt;bit-seq l)
-           prefix-bit-count (- b (count bit-seq))]
+     (let [bits (long-&gt;bitstring l)
+           prefix-bit-count (- b (count bits))]
        (assert (&gt;= prefix-bit-count 0) &quot;Number of bits must be enough to contain the value.&quot;)
-       (flatten (conj bit-seq
-                      (take prefix-bit-count (repeat 0)))))))</pre></td></tr><tr><td class="docs"><p>The number of bits required to represent the long value.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn long-&gt;bit-count
+       (str (apply str (take prefix-bit-count (repeat &quot;0&quot;)))
+            bits))))</pre></td></tr><tr><td class="docs"><p>The number of bits required to represent the long value.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- long-&gt;bit-count
   [^long l]
   (count (Long/toBinaryString l)))</pre></td></tr><tr><td class="docs"><p>Look at how many bits are required to represent the value 'l' in binary
   and returns a sequence of numbers specifying the size of 'n' bit blocks
@@ -2982,33 +2996,63 @@ net.brehaut.ClojureTools = (function (SH) {
       (map +
            (take n (repeat range-block-size))
            (concat (take remainder (repeat 1))
-                   (take (- n remainder) (repeat 0)))))))</pre></td></tr><tr><td class="docs"><p>Function supporting the spliting of a sequence into smaller sequences. Expects 'v'
-  a sequence of one or more nested sequences and 'n' a number of elements. 'n' is used
-  to split the last nested sequence in the overall sequence 'v' and then the larger
-  sequence of nested sequences is returned. When called using reduce, a sequence can
-  be split into parts of the sizes specified in the sequence containing the values of 'n'.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn split-seq-fn
+                   (take (- n remainder) (repeat 0)))))))</pre></td></tr><tr><td class="docs"><p>Function supports the splitting of a string into smaller strings. 'v' is a sequence
+  of one or more strings where the last string is to be split into two strings, the first
+  of length 'n'. The result returned is a sequence idential to the original sequence but
+  with the last item split into two parts.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn- split-bitstring-fn
   [v n]
   (let [starters (take (dec (count v)) v)
-        last-split (remove empty? (split-at n (last v)))]
-    (concat starters last-split)))</pre></td></tr><tr><td class="docs"><p>Split the sequence 's' into several smaller sequences of the sizes specified in the sequence 'r'.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn split-seq
+        last (last v)
+        last-1 (subs last 0 n)
+        last-2 (subs last n)]
+    (flatten (conj '() last-2 last-1 starters))))</pre></td></tr><tr><td class="docs"><p>Split the bitstring 's' into a sequence of bitstrings of sizes defined in ranges 'r'.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn split-bitstring
   [s r]
-  (assert (== (count s) (reduce + r)) &quot;The total size of the sub-sequences must be the same as the size of the initial sequence.&quot;)
-  (assert (reduce #(and %1 (&gt;= %2 1)) true r) &quot;Subelements must be of size 1 or above.&quot;)
-  (assert (not= 0 (count s)) &quot;There must be a non-empty sequence to split.&quot;)
-  (reduce split-seq-fn [s] r))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn seq-&gt;long
-  [s]
-  (reduce #(+ (* %1 2) %2) 0 s))</pre></td></tr><tr><td class="docs">
-</td><td class="codes"><pre class="brush: clojure">(defn seq-&gt;max
-  [s]
-  (long (dec (Math/pow 2 (count s)))))</pre></td></tr><tr><td class="docs"><p>Turn a sequence of 1s and 0s into a sparse array with only one bit set.</p>
-</td><td class="codes"><pre class="brush: clojure">(defn seq-&gt;single-bit-sparse-array
-  [size s]
-  (let [val (seq-&gt;long s)
-        max (seq-&gt;max s)]
-    (num-&gt;single-bit-in-seq size val max)))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_sparse.core">sparse.core</li><li class="floating-toc-li" id="floating-toc_sparse.utils">sparse.utils</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
+  (assert (== (count s) (reduce + r)) &quot;The total size of the sub-bitstrings must be the same as the size of the initial bitstring&quot;)
+  (assert (reduce #(and %1 (&gt;= %2 1)) true r) &quot;Sub-bitstrings must be of size 1 or above.&quot;)
+  (assert (not= 0 (count s)) &quot;There must be a non-empty bitstring to split.&quot;)
+  (reduce split-bitstring-fn [s] (drop-last r)))</pre></td></tr><tr><td class="docs"><p>Check that a sparse sequence is valid, i.e. only contains 1s and 0s or is empty.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn valid-sparse?
+  [sparse]
+  (not (some #(not (or (= 1 %) (= 0 %))) sparse)))</pre></td></tr><tr><td class="docs"><p>Go from a sparse bit sequence back to the original number (or a possible range as
+the answer often won't be precise).</p>
+</td><td class="codes"></td></tr><tr><td class="docs"><p>Turn the position of a bit in a particular size sequence into the original value, or
+   more precisely into three values: the highest possible value that could be represented
+  by this bit position, the mid-value and the lowest possible value.</p>
+
+<p>  Suppose that an 8 bit sparse array represents a value in the range zero to 100,000.
+  Fairly obviously, one bit represents a large range of values. In this case, the
+  sparse sequence (1 0 0 0 0 0 0 0) can have been generated from numbers from 100,000
+  down to 87,500 and the mid-point value is 93,750.</p>
+
+<p>  So, sparse arrays that a small relative to the number that they encode and rather
+  imprecise. However, sparse arrays that are large relative to the number that they encode
+  can be much more precise.</p>
+</td><td class="codes"><pre class="brush: clojure">(defn bit-pos-&gt;num
+  [^long size ^long pos ^long range]
+  (let [top (int (Math/floor (/ (* range pos) size)))
+        bottom (int (Math/ceil (/ (* range (dec pos)) size)))
+        mid (int (Math/floor (/ (+ top bottom) 2)))]
+    [top mid bottom]))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn index-of-first-one
+  [bit-seq]
+  (first (keep-indexed #(when (= 1 %2) %1) bit-seq)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn set-bit-pos
+  [bit-seq]
+  (- (count bit-seq) (index-of-first-one bit-seq)))</pre></td></tr><tr><td class="docs"><p>Turns a bit sequence with a single bit set back into a value within the specified range</p>
+</td><td class="codes"><pre class="brush: clojure">(defn single-bit-in-seq-&gt;num
+  [bit-seq ^long range]
+  (second (bit-pos-&gt;num (count bit-seq) (set-bit-pos bit-seq) range)))</pre></td></tr><tr><td class="docs">
+</td><td class="codes"><pre class="brush: clojure">(defn long-&gt;bit-seq
+  ([^long l]
+     (map #(- (long %) 48) (Long/toBinaryString l)))
+  ([^long l ^long b]
+     (let [bit-seq (long-&gt;bit-seq l)
+           prefix-bit-count (- b (count bit-seq))]
+       (assert (&gt;= prefix-bit-count 0) &quot;Number of bits must be enough to contain the value.&quot;)
+       (flatten (conj bit-seq
+                      (take prefix-bit-count (repeat 0)))))))</pre></td></tr><tr><td class="spacer docs">&nbsp;</td><td class="codes" /></tr></table><div class="footer">Generated by <a href="https://github.com/gdeer81/marginalia">Marginalia</a>.&nbsp;&nbsp;Syntax highlighting provided by Alex Gorbatchev's <a href="http://alexgorbatchev.com/SyntaxHighlighter/">SyntaxHighlighter</a><div id="floating-toc"><ul><li class="floating-toc-li" id="floating-toc_sparse.core">sparse.core</li><li class="floating-toc-li" id="floating-toc_sparse.utils">sparse.utils</li></ul></div></div><script type="text/javascript">SyntaxHighlighter.defaults['gutter'] = false;
 SyntaxHighlighter.all();
 
 // hackity hack
