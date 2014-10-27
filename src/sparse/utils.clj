@@ -121,13 +121,13 @@
   (assert (not= 0 (count s)) "There must be a non-empty bitstring to split.")
   (reduce split-bitstring-fn [s] (drop-last r)))
 
+; Go from a sparse bit sequence back to the original number (or a possible range as
+; the answer often won't be precise).
+
 (defn valid-sparse?
   "Check that a sparse sequence is valid, i.e. only contains 1s and 0s or is empty."
   [sparse]
   (not-any? #(not (or (= 1 %) (= 0 %))) sparse))
-
-; Go from a sparse bit sequence back to the original number (or a possible range as
-; the answer often won't be precise).
 
 (defn bit-pos->num
   "Turn the position of a bit in a particular size sequence into the original value, or
