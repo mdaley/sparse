@@ -22,8 +22,10 @@
         ranges-bit-count (reduce + ranges)
         value-bits (long->bitstring value ranges-bit-count)
         value-blocks (split-bitstring value-bits ranges)
-        sparse-blocks (map #(bitstring->single-bit-bitstring sparse-block-size %) value-blocks)]
-    (str (zeros sparse-starting-block-size) (reduce str "" sparse-blocks))))
+        bits-to-set (map #(bitstring->bit-to-set sparse-block-size %) value-blocks)
+        bits-mod (reverse (clojure.core/range 0 (* sparse-block-size (count bits-to-set)) sparse-block-size))
+        bits-to-set (map #(int (+ %1 %2)) bits-to-set bits-mod)]
+    (bits->binarystring size (set bits-to-set))))
 
 (defn sparse->long
   [sparse ^long range]

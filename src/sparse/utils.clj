@@ -1,4 +1,5 @@
-(ns sparse.utils)
+(ns sparse.utils
+  (:require [clojure.string :refer [join]]))
 
 (defn bit-to-set
   "Returns the bit to set in an array of bits of length `size` which represents
@@ -40,28 +41,19 @@
     (bit-to-set size (* val (/ size range)) size)))
 
 (defn zeros
+  "Create a string of zeros of length `n`."
   [n]
   (reduce str "" (repeat n "0")))
 
-(defn num->single-bit-bitstring
-  "Returns a length `size` bitstring with a single bit set that represents the position of the number
-  `value` in the `range` (zreo to `range` inclusive)."
-  [size val range]
-  (let [bit-to-set (bit-to-set size val range)]
-    (reduce (fn [s x] (str s (if (= x bit-to-set) "1" "0"))) "" (reverse (clojure.core/range 0 size)))))
-
-(defn bitstring->single-bit-bitstring
-  "Take `bitstring`, transform it to a number, work out the maximum long value of a bit
-  string of its size and then calculate the single-bit bitstring of length `size` that
-  represents the number."
+(defn bitstring->bit-to-set
   [size bitstring]
   (let [val (Long/parseLong bitstring 2)
         range (Long/parseLong (reduce str (repeat (count bitstring) "1")) 2)]
-    (num->single-bit-bitstring size val range)))
+    (bit-to-set size val range)))
 
-;; (defn bits->binarystring
-;;   [size bits]
-;;   (reduce (fn [s x] (str s (if (contains? bits x) "1" "0"))) "" (reverse (range size))))
+(defn bits->binarystring
+  [size bits]
+  (reduce (fn [s x] (str s (if (contains? bits x) "1" "0"))) "" (reverse (range size))))
 
 (defn long->bitstring
   "Turn a long value 'l' into a string of bits. In the second form, the number of bits 'b'
@@ -74,7 +66,7 @@
            prefix-bit-count (- b (count bits))]
        (assert (>= prefix-bit-count 0) "Number of bits must be enough to contain the value.")
 
-       (str (apply str (take prefix-bit-count (repeat "0")))
+       (str (join (take prefix-bit-count (repeat "0")))
             bits))))
 
 (defn- long->bit-count
@@ -129,13 +121,13 @@
   (assert (not= 0 (count s)) "There must be a non-empty bitstring to split.")
   (reduce split-bitstring-fn [s] (drop-last r)))
 
+; Go from a sparse bit sequence back to the original number (or a possible range as
+; the answer often won't be precise).
+
 (defn valid-sparse?
   "Check that a sparse sequence is valid, i.e. only contains 1s and 0s or is empty."
   [sparse]
-  (not (some #(not (or (= 1 %) (= 0 %))) sparse)))
-
-;; Go from a sparse bit sequence back to the original number (or a possible range as
-;; the answer often won't be precise).
+  (not-any? #(not (or (= 1 %) (= 0 %))) sparse))
 
 (defn bit-pos->num
   "Turn the position of a bit in a particular size sequence into the original value, or
@@ -168,13 +160,3 @@
   "Turns a bit sequence with a single bit set back into a value within the specified range"
   [bit-seq ^long range]
   (second (bit-pos->num (count bit-seq) (set-bit-pos bit-seq) range)))
-
-(defn long->bit-seq
-  ([^long l]
-     (map #(- (long %) 48) (Long/toBinaryString l)))
-  ([^long l ^long b]
-     (let [bit-seq (long->bit-seq l)
-           prefix-bit-count (- b (count bit-seq))]
-       (assert (>= prefix-bit-count 0) "Number of bits must be enough to contain the value.")
-       (flatten (conj bit-seq
-                      (take prefix-bit-count (repeat 0)))))))
