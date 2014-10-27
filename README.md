@@ -22,11 +22,11 @@ For example, suppose a sparse sequence represents a long value, has 21 bits with
 are some example transformations of integers into the sparse sequence:
 
 <table>
-  <tr><th>Value</th><th>Sparse array</th></tr>
-  <tr><td>0</td><td>(0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</td></tr>
-  <tr><td>100</td><td>(0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 1 0 0 0 0 1)</td></tr>
-  <tr><td>567</td><td>(0 0 0 1 0 0 0 0 1 1 0 0 0 0 0 1 0 1 0 0 0)</td></tr>
-  <tr><td>1024</td><td>(0 0 1 0 0 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0 1)</td></tr>
+  <tr><th>Value</th><th>Sparse string</th></tr>
+  <tr><td>0</td><td>"000010001000100010001"</td></tr>
+  <tr><td>100</td><td>"000010010010000100001"</td></tr>
+  <tr><td>567</td><td>"000100001100000101000"</td></tr>
+  <tr><td>1024</td><td>"001000001000100010001"</td></tr>
 </table>
 
 Note that the bit sequence is always 21 bits in length and always has
@@ -46,7 +46,7 @@ reversed back to the original input value.
 Import from [clojars](https://clojars.org/sparse) using:
 
 ```clj
-[sparse 0.1.2]
+[sparse 0.1.3]
 ```
 
 then:
@@ -59,8 +59,7 @@ then:
 (long->sparse 1000 17 455 1024)
 ```
 
-This generates 1000 bit sparse representation with 17 bits set of the number 455 within the
-range 0 to 1024.
+This generates a 1000 character string of 1s and 0s with 17 bits set. This represents the number 455 within the range 0 to 1024.
 
 See the [documentation](http://mdaley.github.io/sparse/docs/uberdoc.html).
 
