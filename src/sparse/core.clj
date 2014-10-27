@@ -2,7 +2,7 @@
   (require [sparse.utils :refer :all]))
 
 (defn long->sparse
-  "Turns a `value` within the range zero to `range` (inclusive) into a sparse sequence
+  "Turns a `value` within the range zero to `range` (inclusive) into a sparse string
   of 1s and 0s that has length `size` and `bits` number of bits set.
 
   Throws assertion error for various situations:
@@ -20,12 +20,10 @@
         sparse-starting-block-size (- size (* sparse-block-size bits))
         ranges (long->bit-ranges range bits)
         ranges-bit-count (reduce + ranges)
-        value-as-bits (long->bit-seq value ranges-bit-count)
-        value-in-blocks (split-seq value-as-bits ranges)
-        sparse-blocks (map #(seq->single-bit-sparse-array sparse-block-size %) value-in-blocks)]
-    (flatten (concat
-              (zero-seq sparse-starting-block-size)
-              sparse-blocks))))
+        value-bits (long->bitstring value ranges-bit-count)
+        value-blocks (split-bitstring value-bits ranges)
+        sparse-blocks (map #(bitstring->single-bit-bitstring sparse-block-size %) value-blocks)]
+    (str (zeros sparse-starting-block-size) (reduce str "" sparse-blocks))))
 
 (defn sparse->long
   [sparse ^long range]

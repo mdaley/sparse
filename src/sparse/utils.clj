@@ -39,64 +39,29 @@
         result))
     (bit-to-set size (* val (/ size range)) size)))
 
-(defn bit-pos->num
-  "Turn the position of a bit in a particular size sequence into the original value, or
-   more precisely into three values: the highest possible value that could be represented
-  by this bit position, the mid-value and the lowest possible value.
+(defn zeros
+  [n]
+  (reduce str "" (repeat n "0")))
 
-  Suppose that an 8 bit sparse array represents a value in the range zero to 100,000.
-  Fairly obviously, one bit represents a large range of values. In this case, the
-  sparse sequence (1 0 0 0 0 0 0 0) can have been generated from numbers from 100,000
-  down to 87,500 and the mid-point value is 93,750.
+(defn num->single-bit-bitstring
+  "Returns a length `size` bitstring with a single bit set that represents the position of the number
+  `value` in the `range` (zreo to `range` inclusive)."
+  [size val range]
+  (let [bit-to-set (bit-to-set size val range)]
+    (reduce (fn [s x] (str s (if (= x bit-to-set) "1" "0"))) "" (reverse (clojure.core/range 0 size)))))
 
-  So, sparse arrays that a small relative to the number that they encode and rather
-  imprecise. However, sparse arrays that are large relative to the number that they encode
-  can be much more precise."
-  [^long size ^long pos ^long range]
-  (let [top (int (Math/floor (/ (* range pos) size)))
-        bottom (int (Math/ceil (/ (* range (dec pos)) size)))
-        mid (int (Math/floor (/ (+ top bottom) 2)))]
-    [top mid bottom]))
+(defn bitstring->single-bit-bitstring
+  "Take `bitstring`, transform it to a number, work out the maximum long value of a bit
+  string of its size and then calculate the single-bit bitstring of length `size` that
+  represents the number."
+  [size bitstring]
+  (let [val (Long/parseLong bitstring 2)
+        range (Long/parseLong (reduce str (repeat (count bitstring) "1")) 2)]
+    (num->single-bit-bitstring size val range)))
 
-(defn zero-seq
- [n]
- (repeat n 0))
-
-(defn index-of-first-one
-  [bit-seq]
-  (first (keep-indexed #(when (= 1 %2) %1) bit-seq)))
-
-(defn set-bit-pos
-  [bit-seq]
-  (- (count bit-seq) (index-of-first-one bit-seq)))
-
-(defn num->single-bit-in-seq
-  "Returns an array of bits of size length with a single bit set that represents
-   the position of the value in the range (inclusive of zero)."
-  [^long size ^long val ^long range]
-  (let [bit-to-set (bit-to-set size val range)
-        starting-zeros-count (- size bit-to-set)
-        ending-zeros-count (dec bit-to-set)]
-    (flatten (conj (zero-seq ending-zeros-count) '(1) (zero-seq starting-zeros-count)))))
-
-(defn bits->binarystring
-  [size bits]
-  (reduce (fn [s x] (str s (if (contains? bits x) "1" "0"))) "" (reverse (range size))))
-
-(defn single-bit-in-seq->num
-  "Turns a bit sequence with a single bit set back into a value within the specified range"
-  [bit-seq ^long range]
-  (second (bit-pos->num (count bit-seq) (set-bit-pos bit-seq) range)))
-
-(defn long->bit-seq
-  ([^long l]
-     (map #(- (long %) 48) (Long/toBinaryString l)))
-  ([^long l ^long b]
-     (let [bit-seq (long->bit-seq l)
-           prefix-bit-count (- b (count bit-seq))]
-       (assert (>= prefix-bit-count 0) "Number of bits must be enough to contain the value.")
-       (flatten (conj bit-seq
-                      (take prefix-bit-count (repeat 0)))))))
+;; (defn bits->binarystring
+;;   [size bits]
+;;   (reduce (fn [s x] (str s (if (contains? bits x) "1" "0"))) "" (reverse (range size))))
 
 (defn long->bitstring
   "Turn a long value 'l' into a string of bits. In the second form, the number of bits 'b'
@@ -108,10 +73,11 @@
      (let [bits (long->bitstring l)
            prefix-bit-count (- b (count bits))]
        (assert (>= prefix-bit-count 0) "Number of bits must be enough to contain the value.")
+
        (str (apply str (take prefix-bit-count (repeat "0")))
             bits))))
 
-(defn long->bit-count
+(defn- long->bit-count
   "The number of bits required to represent the long value."
   [^long l]
   (count (Long/toBinaryString l)))
@@ -163,42 +129,52 @@
   (assert (not= 0 (count s)) "There must be a non-empty bitstring to split.")
   (reduce split-bitstring-fn [s] (drop-last r)))
 
-(defn split-seq-fn
-  "Function supporting the spliting of a sequence into smaller sequences. Expects 'v'
-  a sequence of one or more nested sequences and 'n' a number of elements. 'n' is used
-  to split the last nested sequence in the overall sequence 'v' and then the larger
-  sequence of nested sequences is returned. When called using reduce, a sequence can
-  be split into parts of the sizes specified in the sequence containing the values of 'n'."
-  [v n]
-  (let [starters (take (dec (count v)) v)
-        last-split (remove empty? (split-at n (last v)))]
-    (concat starters last-split)))
-
-(defn split-seq
-  "Split the sequence 's' into several smaller sequences of the sizes specified in the sequence 'r'."
-  [s r]
-  (assert (== (count s) (reduce + r)) "The total size of the sub-sequences must be the same as the size of the initial sequence.")
-  (assert (reduce #(and %1 (>= %2 1)) true r) "Subelements must be of size 1 or above.")
-  (assert (not= 0 (count s)) "There must be a non-empty sequence to split.")
-  (reduce split-seq-fn [s] r))
-
-(defn seq->long
-  [s]
-  (reduce #(+ (* %1 2) %2) 0 s))
-
-(defn seq->max
-  [s]
-  (long (dec (Math/pow 2 (count s)))))
-
-(defn seq->single-bit-sparse-array
-  "Turn a sequence of 1s and 0s into a sparse array with only one bit set."
-  [size s]
-  (let [val (seq->long s)
-        max (seq->max s)]
-    (num->single-bit-in-seq size val max)))
-
-
 (defn valid-sparse?
   "Check that a sparse sequence is valid, i.e. only contains 1s and 0s or is empty."
   [sparse]
   (not (some #(not (or (= 1 %) (= 0 %))) sparse)))
+
+;; Go from a sparse bit sequence back to the original number (or a possible range as
+;; the answer often won't be precise).
+
+(defn bit-pos->num
+  "Turn the position of a bit in a particular size sequence into the original value, or
+   more precisely into three values: the highest possible value that could be represented
+  by this bit position, the mid-value and the lowest possible value.
+
+  Suppose that an 8 bit sparse array represents a value in the range zero to 100,000.
+  Fairly obviously, one bit represents a large range of values. In this case, the
+  sparse sequence (1 0 0 0 0 0 0 0) can have been generated from numbers from 100,000
+  down to 87,500 and the mid-point value is 93,750.
+
+  So, sparse arrays that a small relative to the number that they encode and rather
+  imprecise. However, sparse arrays that are large relative to the number that they encode
+  can be much more precise."
+  [^long size ^long pos ^long range]
+  (let [top (int (Math/floor (/ (* range pos) size)))
+        bottom (int (Math/ceil (/ (* range (dec pos)) size)))
+        mid (int (Math/floor (/ (+ top bottom) 2)))]
+    [top mid bottom]))
+
+(defn index-of-first-one
+  [bit-seq]
+  (first (keep-indexed #(when (= 1 %2) %1) bit-seq)))
+
+(defn set-bit-pos
+  [bit-seq]
+  (- (count bit-seq) (index-of-first-one bit-seq)))
+
+(defn single-bit-in-seq->num
+  "Turns a bit sequence with a single bit set back into a value within the specified range"
+  [bit-seq ^long range]
+  (second (bit-pos->num (count bit-seq) (set-bit-pos bit-seq) range)))
+
+(defn long->bit-seq
+  ([^long l]
+     (map #(- (long %) 48) (Long/toBinaryString l)))
+  ([^long l ^long b]
+     (let [bit-seq (long->bit-seq l)
+           prefix-bit-count (- b (count bit-seq))]
+       (assert (>= prefix-bit-count 0) "Number of bits must be enough to contain the value.")
+       (flatten (conj bit-seq
+                      (take prefix-bit-count (repeat 0)))))))
